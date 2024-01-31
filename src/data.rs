@@ -171,9 +171,12 @@ impl Hitbox {
     pub fn both(length: f32) -> Hitbox {
         Hitbox{ width: length, height: length }
     }
+    pub fn as_vec2(&self) -> Vec2 {
+        Vec2::new(self.width, self.height)
+    }
 }
 #[derive(Component)]
-pub struct CollisionFlags(Vec<usize>);
+pub struct CollisionFlags(Vec<Entity>);
 #[derive(Resource)]
 pub struct MyTimer(pub Timer);
 #[derive(Resource)]
@@ -182,3 +185,11 @@ pub struct HeartbeatTimer(pub Timer);
 pub struct EnemySpawnTimer(pub Timer);
 #[derive(Resource)]
 pub struct EnemyLevelUpTimer(pub Timer);
+#[derive(Component)]
+pub struct MainCamera;
+#[derive(Component)]
+pub struct Mouse;
+#[derive(Component)]
+pub struct OnScreen(pub bool);
+#[derive(Component)]
+pub struct Position(pub Vec2);

@@ -1,4 +1,4 @@
-use bevy::{a11y::accesskit::TextAlign, prelude::*, render::camera::ScalingMode, text, time::Stopwatch, utils::Duration};
+use bevy::{prelude::*, render::camera::ScalingMode, sprite::collide_aabb::collide};
 use rand::Rng;
 use crate::{
     data::*, 
@@ -6,12 +6,14 @@ use crate::{
     enemy::*,
     player::*,
     projectile::*,
+    input::*,
 };
 mod data;
 mod util;
 mod player;
 mod enemy;
 mod projectile;
+mod input;
 
 // #[derive(Resource)]
 // struct WorldClock(Stopwatch);
@@ -21,7 +23,7 @@ fn player_enemy_collision(mut player_query: Query<(&Transform, &Hitbox, &mut Cur
     let (player_pos, player_hitbox, mut player_health) = player_query.single_mut();
     for (enemy_pos, enemy_hitbox, enemy_damage) in enemy_query.iter() {
         // check collision
-        if _are_colliding(&player_pos.translation, &player_hitbox, &enemy_pos.translation, &enemy_hitbox) {
+        if let Some(_) = collide(player_pos.translation, player_hitbox.as_vec2(), enemy_pos.translation, enemy_hitbox.as_vec2()) {
             // TODO
                 // think about consecutive collisions, should not damage every frame
             // apply damage if necessary
@@ -37,7 +39,7 @@ pub fn projectile_enemy_collision(
 ) {
     for (mut projectile, projectile_transform, projectile_hitbox, projectile_entity) in projectile_query.iter_mut() {
         for (mut current_health, enemy_transform, enemy_hitbox, enemy_entity) in enemy_query.iter_mut() {
-            if _are_colliding(&projectile_transform.translation, &projectile_hitbox, &enemy_transform.translation, &enemy_hitbox) {
+            if let Some(_) = collide(projectile_transform.translation, projectile_hitbox.as_vec2(), enemy_transform.translation, enemy_hitbox.as_vec2()) {
                 current_health.0 -= projectile.damage;
                 projectile.pierce -= 1;
                 if projectile.pierce <= 0 {
@@ -71,7 +73,7 @@ fn setup (
     // camera
     let mut my_camera = Camera2dBundle::default();
     my_camera.projection.scaling_mode = ScalingMode::FixedVertical(1600.0);
-    commands.spawn(my_camera);
+    commands.spawn((my_camera, MainCamera));
     
     // player
     let player_sprite = asset_server.load("sprites/player.png");
@@ -126,6 +128,13 @@ fn setup (
         },
         Healthbar
     ));
+
+    // Mouse
+    commands.spawn((
+        Mouse,
+        OnScreen(false),
+        Position(Vec2::splat(0.))
+    ));
 }
 
 fn main() {
@@ -137,10 +146,14 @@ fn main() {
     .insert_resource(EnemySpawnTimer(Timer::from_seconds(INITIAL_ENEMY_SPAWN_RATE, TimerMode::Repeating)))
     .insert_resource(EnemyLevelUpTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
     .add_systems(Startup, setup)
+    .add_systems(Update, (
+        bevy::window::close_on_esc,
+        update_ui,
+    ))
     .add_systems(
         FixedUpdate, ( 
-            bevy::window::close_on_esc,
-            handle_input,
+            handle_mouse_input,
+            handle_keyboard_input,
             fire_projectiles,
             projectile_path,
             projectile_move,
@@ -151,7 +164,6 @@ fn main() {
             projectile_enemy_collision,
             spawn_enemy,
             increase_difficulty,
-            update_ui,
         ).chain()
     )
     .run();

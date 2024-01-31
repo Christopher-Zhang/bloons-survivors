@@ -1,10 +1,10 @@
-use bevy::prelude::*; 
+use bevy::{prelude::*, sprite::collide_aabb::{Collision, collide}}; 
 use crate::{data::*};
 
-pub fn _will_collide(pos_a: &Vec3, vel_a: &Velocity, hitbox_a: &Hitbox, pos_b: &Vec3, vel_b: &Velocity, hitbox_b: &Hitbox, delta_time: f32) -> bool {
+pub fn _will_collide(pos_a: &Vec3, vel_a: &Velocity, hitbox_a: &Hitbox, pos_b: &Vec3, vel_b: &Velocity, hitbox_b: &Hitbox, delta_time: f32) -> Option<Collision> {
     let new_pos_a = Vec3::new(pos_a.x + vel_a.x * delta_time, pos_a.y + vel_a.y * delta_time, pos_a.z);
     let new_pos_b = Vec3::new(pos_b.x + vel_b.x * delta_time, pos_b.y + vel_b.y * delta_time, pos_b.z);
-    _are_colliding(&new_pos_a, hitbox_a, &new_pos_b, hitbox_b)
+    collide(new_pos_a, hitbox_a.as_vec2(), new_pos_b, hitbox_b.as_vec2())
 }
 
 pub fn _are_colliding(pos_a: &Vec3, hitbox_a: &Hitbox, pos_b: &Vec3, hitbox_b: &Hitbox) -> bool {
